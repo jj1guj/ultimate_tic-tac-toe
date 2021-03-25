@@ -118,7 +118,7 @@ function legalMoveList(B,id){
 }
 
 function point_policy(row){
-    var pointl={2:10000,1:50};
+    var pointl={2:100000,1:500};
     var count_sente =row.filter(function(x){return x===1}).length;
     var count_gote =row.filter(function(x){return x===-1}).length;
     if((count_sente==1 && count_gote==0)||
