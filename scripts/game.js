@@ -71,28 +71,42 @@ class Board{
     push(id){
         var row=Math.floor(id/9);
         var col=id%9;
-        var put
-        if(this.turn)put=-1;
-        else put=1;
+        var put=1;
+        if(this.turn){
+            put=-1;
+        }else{
+            put=1;
+        }
         this.board[row][col]=put;
         this.board_min[Math.floor(row/3)][Math.floor(col/3)][row%3][col%3]=put;
+        this.turn=!this.turn;
+        this.disposition[Math.floor(row/3)][Math.floor(col/3)]=this.is_gameover_min(this.board_min[Math.floor(row/3)][Math.floor(col/3)]);
+    }
+
+    pop(id){
+        var row=Math.floor(id/9);
+        var col=id%9;
+        this.board[row][col]=0;
+        this.board_min[Math.floor(row/3)][Math.floor(col/3)][row%3][col%3]=0;
         this.turn=!this.turn;
         this.disposition[Math.floor(row/3)][Math.floor(col/3)]=this.is_gameover_min(this.board_min[Math.floor(row/3)][Math.floor(col/3)]);
     }
 }
 
 function legalMoveList(B,id){
-    row=Math.floor(id/9);
-    col=id%9;
-    mrow=row%3;
-    mcol=col%3;
-    L=[];
+    var row=Math.floor(id/9);
+    var col=id%9;
+    var mrow=row%3;
+    var mcol=col%3;
+    var L=[];
     if(id<0||B.disposition[mrow][mcol]!=0){
-        for(i=0;i<9;++i)for(j=0;j<9;++j)if(B.board[i][j]==0){
-            L.push(9*i+j);
+        for(var i=0;i<9;++i)for(var j=0;j<9;++j)if(B.board[i][j]==0){
+            if(B.disposition[Math.floor(i/3)][Math.floor(j/3)]==0){
+                L.push(9*i+j);
+            }
         }
     }else if(B.disposition[mrow][mcol]==0){
-        for(i=0;i<3;++i)for(j=0;j<3;++j){
+        for(var i=0;i<3;++i)for(var j=0;j<3;++j){
             if(B.board_min[mrow][mcol][i][j]==0){
                 r=3*mrow+i;
                 c=3*mcol+j;
@@ -120,26 +134,36 @@ function point_policy(row){
 
 function eval_policy(board){
     out=[];
+    var p;
     for(i=0;i<3;++i){
         out_line=[];
         for(j=0;j<3;++j){
             C=[];
             for(k=0;k<3;++k)C.push(board[k][j]);
-            p=point_policy(board[i])+point(C);
+            p=point_policy(board[i])+point_policy(C);
             if(i==j){
                 C=[];
                 for(k=0;k<3;++k)C.push(board[k][k]);
-                p+=point(C);
+                p+=point_policy(C);
             }
             if(i+j==2){
                 C=[];
                 for(k=0;k<3;++k)C.push(board[2-k][k]);
-                p+=point(C);
+                p+=point_policy(C);
             }
             out_line.push(p);
         }
         out.push(out_line);
     }
+    return out;
+}
+
+//置ける場所の数の評価値(合法手数×1で出力)
+function eval_space(B,id){
+    console.log(id);
+    B.push(id);
+    var out=81-legalMoveList(B,id).length;
+    B.pop(id);
     return out;
 }
 
@@ -169,18 +193,26 @@ function evaluate(B){
     return val;
 }
 
-function makeMove(row,col){
-
+function movebyAI(B,id){
+    pointL=[];
+    val=evaluate(B);
+    moveL=legalMoveList(B,id);
+    for(i=0;i<moveL.length;++i){
+        //console.log(i);
+        row=Math.floor(moveL[i]/9);
+        col=moveL[i]%9;
+        point=val[row][col]+eval_space(B,moveL[i]);
+        pointL.push(point);
+        //pointL[i]+=eval_space(B,moveL[i]);
+    }
+    pmax=Math.max(...pointL);
+    for(i=0;i<moveL.length;++i)if(pointL[i]==pmax){
+        console.log(moveL[i]);
+        return moveL[i];
+    }
 }
 
-function move(id){
-    
-}
-
-
-
+human=true;
 B=new Board();
-B.init();
-B.push(1);
-console.log(B.board);
-console.log(legalMoveList(B,1));
+last_move=-1;
+movebyAI(B,last_move);
