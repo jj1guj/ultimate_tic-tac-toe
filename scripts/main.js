@@ -82,25 +82,34 @@ class Board{
         this.turn=!this.turn;
         this.disposition[Math.floor(row/3)][Math.floor(col/3)]=this.is_gameover_min(this.board_min[Math.floor(row/3)][Math.floor(col/3)]);
     }
+
+    pop(id){
+        var row=Math.floor(id/9);
+        var col=id%9;
+        this.board[row][col]=0;
+        this.board_min[Math.floor(row/3)][Math.floor(col/3)][row%3][col%3]=0;
+        this.turn=!this.turn;
+        this.disposition[Math.floor(row/3)][Math.floor(col/3)]=this.is_gameover_min(this.board_min[Math.floor(row/3)][Math.floor(col/3)]);
+    }
 }
 
 function legalMoveList(B,id){
-    row=Math.floor(id/9);
-    col=id%9;
-    mrow=row%3;
-    mcol=col%3;
-    L=[];
+    var row=Math.floor(id/9);
+    var col=id%9;
+    var mrow=row%3;
+    var mcol=col%3;
+    var L=[];
     if(id<0||B.disposition[mrow][mcol]!=0){
-        for(i=0;i<9;++i)for(j=0;j<9;++j)if(B.board[i][j]==0){
+        for(var i=0;i<9;++i)for(var j=0;j<9;++j)if(B.board[i][j]==0){
             if(B.disposition[Math.floor(i/3)][Math.floor(j/3)]==0){
                 L.push(9*i+j);
             }
         }
     }else if(B.disposition[mrow][mcol]==0){
-        for(i=0;i<3;++i)for(j=0;j<3;++j){
+        for(var i=0;i<3;++i)for(var j=0;j<3;++j){
             if(B.board_min[mrow][mcol][i][j]==0){
-                r=3*mrow+i;
-                c=3*mcol+j;
+                var r=3*mrow+i;
+                var c=3*mcol+j;
                 L.push(9*r+c);
             }
         }
@@ -109,9 +118,9 @@ function legalMoveList(B,id){
 }
 
 function point_policy(row){
-    pointl={2:10000,1:50};
-    count_sente =row.filter(function(x){return x===1}).length;
-    count_gote =row.filter(function(x){return x===-1}).length;
+    var pointl={2:10000,1:50};
+    var count_sente =row.filter(function(x){return x===1}).length;
+    var count_gote =row.filter(function(x){return x===-1}).length;
     if((count_sente==1 && count_gote==0)||
     (count_sente==0 && count_gote==1)){
         return pointl[1];
@@ -124,12 +133,12 @@ function point_policy(row){
 }
 
 function eval_policy(board){
-    out=[];
+    var out=[];
     var p;
     for(i=0;i<3;++i){
-        out_line=[];
+        var out_line=[];
         for(j=0;j<3;++j){
-            C=[];
+            var C=[];
             for(k=0;k<3;++k)C.push(board[k][j]);
             p=point_policy(board[i])+point_policy(C);
             if(i==j){
@@ -149,17 +158,25 @@ function eval_policy(board){
     return out;
 }
 
+//置ける場所の数の評価値(合法手数×1で出力)
+function eval_space(B,id){
+    B.push(id);
+    var out=81-legalMoveList(B,id).length;
+    B.pop(id);
+    return out;
+}
+
 function evaluate(B){
-    val=[];
+    var val=[];
     for(i=0;i<9;++i){
-        val_line=[];
+        var val_line=[];
         for(j=0;j<9;++j)val_line.push(0);
         val.push(val_line);
     }
-    priority=eval_policy(B.disposition);
+    var priority=eval_policy(B.disposition);
 
     for(i=0;i<3;++i)for(j=0;j<3;++j){
-        val_min=eval(B.board_min[i][j]);
+        var val_min=eval(B.board_min[i][j]);
         if(priority[i][j]==0 && B.disposition[i][j]==0){
             priority[i][j]=1;
         }
@@ -176,24 +193,24 @@ function evaluate(B){
 }
 
 function movebyAI(B,id){
-    pointL=[];
-    val=evaluate(B);
-    moveL=legalMoveList(B,id);
-    for(i=0;i<moveL.length;++i){
-        row=Math.floor(moveL[i]/9);
-        col=moveL[i]%9;
-        pointL.push(val[row][col]);
+    var pointL=[];
+    var val=evaluate(B);
+    var moveL=legalMoveList(B,id);
+    for(var i=0;i<moveL.length;++i){
+        var row=Math.floor(moveL[i]/9);
+        var col=moveL[i]%9;
+        var point=val[row][col]+eval_space(B,moveL[i]);
+        pointL.push(point);
     }
-    pmax=Math.max(...pointL);
+    var pmax=Math.max(...pointL);
     for(i=0;i<moveL.length;++i)if(pointL[i]==pmax){
-        console.log(moveL[i]);
         return moveL[i];
     }
 }
 
-human=true;
-B=new Board();
-last_move=-1;
+var human=true;
+var B=new Board();
+var last_move=-1;
 
 //盤面の生成
 var table=document.createElement('table');
@@ -223,7 +240,7 @@ function move(id){
     
     document.getElementById(id).textContent=put;
     if(B.is_gameover()!=0){
-        return_val=B.is_gameover();
+        var return_val=B.is_gameover();
         if(return_val==-1){
             alert("後手勝ち");
         }else if(return_val==1){
