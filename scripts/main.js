@@ -237,7 +237,10 @@ function makeMove(){
 function move(id){
     if(B.turn)put="o";
     else put="x";
-    
+    if(last_move>=0){
+        document.getElementById(last_move).style.backgroundColor="#FFFFFF";    
+    }
+    document.getElementById(id).style.background="#FA8072";
     document.getElementById(id).textContent=put;
     if(B.is_gameover()!=0){
         var return_val=B.is_gameover();
